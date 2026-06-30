@@ -370,10 +370,12 @@ Un **empuje anti-barandal** (activo en todos los estados) corrige hacia la derec
 
 ## 10. Mundos y sensores
 
-Los mundos base son los **oficiales** del zip de Canvas (`MR4010_proyecto_final_2026.zip`),
-que ya incluyen el trafico SUMO, los tres peatones y los cuatro vehiculos
-estacionados. La unica modificacion del vehiculo es agregar el **nodo Radar** y los
-**sensores laterales** de la Act. 4.2. El procedimiento exacto esta en
+Los mundos oficiales del zip de Canvas ya estan **integrados y configurados** en
+[`worlds/`](worlds/): `city_traffic_2025_01.wbt` (Mundo #1, entrenamiento) y
+`city_traffic_2025_02.wbt` (Mundo #2, con trafico SUMO, tres peatones y vehiculos
+estacionados). Al `BmwX5` se le agregaron el **LiDAR + Radar** (slot delantero), el
+nodo **Recognition** en la camara y los **sensores laterales** de la Act. 4.2; los
+controladores ya quedan asignados. El detalle esta en
 [`worlds/README_mundos.md`](worlds/README_mundos.md).
 
 | Slot | Dispositivo | Nombre Webots | Uso |
@@ -488,7 +490,10 @@ navegacion_autonoma_final/
 │       ├── model/                     # cil_model.tflite (copiar tras entrenar)
 │       └── requirements.txt
 ├── worlds/
-│   └── README_mundos.md               # Mundos oficiales + nodo Radar y sensores laterales
+│   ├── city_traffic_2025_01.wbt       # Mundo #1 (entrenamiento) — controlador cil_data_collector
+│   ├── city_traffic_2025_02.wbt       # Mundo #2 (evaluacion) — controlador cil_autonomous
+│   ├── city_traffic_2025_02_net/      # Red SUMO del Mundo #2
+│   └── README_mundos.md               # Detalle de los sensores integrados al BmwX5
 ├── tests/
 │   └── test_cil_inference.py          # Pruebas de inferencia
 └── screenshots/                       # Evidencias (entrenamiento, rutas, sensores)
@@ -496,24 +501,27 @@ navegacion_autonoma_final/
 
 ### Ejecucion
 
-1. **Mundos:** descargar `MR4010_proyecto_final_2026.zip` de Canvas, copiar los `.wbt`
-   a `worlds/` y aplicarles el snippet de sensores de `worlds/README_mundos.md`.
-2. **Runtime:** crear `controllers/<nombre>/runtime.ini` con el `PYTHONPATH` al
-   entorno de Python que tenga las dependencias de `requirements.txt`:
+Los mundos oficiales ya estan integrados en `worlds/` (sensores y controladores
+asignados). Pasos:
+
+1. **Runtime (solo si hace falta):** si el Python de Webots no tiene las dependencias
+   de `requirements.txt`, edita `controllers/<nombre>/runtime.ini` y apunta
+   `PYTHONPATH` a tu entorno:
 
    ```ini
    [environment variables]
-   PYTHONPATH=/ruta/a/tu/env/lib/python3.x/site-packages
+   PYTHONPATH = /ruta/a/tu/env/lib/python3.x/site-packages
    ```
 
-3. **Recoleccion (Mundo #1):** abrir el mundo de entrenamiento con el controlador
-   `cil_data_collector`, conducir y generar `dataset/IMG/` + `dataset/driving_log.csv`.
-4. **Dataset:** subir `dataset/` al repo `cil_dataset` en GitHub.
-5. **Entrenamiento:** ejecutar `cil_training/cil_colab.ipynb` en Google Colab y
+2. **Recoleccion (Mundo #1):** abrir `worlds/city_traffic_2025_01.wbt` desde este
+   repositorio y pulsar Play. El controlador `cil_data_collector` ya esta asignado;
+   conducir genera `controllers/cil_data_collector/dataset/IMG/` + `driving_log.csv`.
+3. **Dataset:** subir `dataset/` al repo `cil_dataset` en GitHub.
+4. **Entrenamiento:** ejecutar `cil_training/cil_colab.ipynb` en Google Colab y
    copiar `cil_model.tflite` a `controllers/cil_autonomous/model/`.
-6. **Evaluacion (Mundo #2):** abrir el mundo de evaluacion con el controlador
-   `cil_autonomous`, dar comandos por teclado y recorrer las tres rutas.
-7. **Pruebas:** `python tests/test_cil_inference.py`.
+5. **Evaluacion (Mundo #2):** abrir `worlds/city_traffic_2025_02.wbt`, pulsar Play y
+   dar comandos por teclado (`1`-`4`) para recorrer las tres rutas.
+6. **Pruebas:** `python tests/test_cil_inference.py`.
 
 <br>
 <p align="center"><i>Instituto Tecnologico y de Estudios Superiores de Monterrey
