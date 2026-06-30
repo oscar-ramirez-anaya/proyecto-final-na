@@ -34,32 +34,36 @@ parámetros clave. Las instrucciones de ejecución están en el `README.md`.
 ## 2. Modelo CIL ramificado
 
 ```
- image (66x200x3)                       command (one-hot, 4)
-      │                                        │
-      v                                        │
- ┌─────────────────────────────────────┐      │
- │ Conv32 x2 -> MaxPool -> Dropout 0.25 │      │
- │ Conv64 x2 -> MaxPool -> Dropout 0.25 │      │
- │ Conv64 x2 -> MaxPool -> Dropout 0.25 │      │
- │ Flatten -> Dense(256) -> Dropout 0.5 │      │
- └──────────────────┬──────────────────┘      │
-                    │ z                         │
-     ┌──────────────┼───────────────┐          │
-     v              v               v          │
-  FOLLOW         LEFT/STRAIGHT     RIGHT        │
-  Dense128       Dense128 ...      Dense128     │
-  Dense1(tanh)   Dense1(tanh)      Dense1(tanh) │
-     └──────────────┴───────────────┘          │
-                    │ concat (N,4) * MAX_ANGLE  │
-                    v                           │
-                 [ * one-hot ] <────────────────┘
+ image (88x200x3)                            command (one-hot, 4)
+      │                                            │
+      v                                            │
+ ┌──────────────────────────────────────────┐     │
+ │ Bloque 1: Conv 5x5/s2 x32 -> Conv 3x3 x32  │    │
+ │ Bloque 2: Conv 3x3/s2 x64 -> Conv 3x3 x64  │    │  cada conv:
+ │ Bloque 3: Conv 3x3/s2 x128 -> Conv x128    │    │  BN + ReLU + Dropout(0.2)
+ │ Bloque 4: Conv 3x3 x256 -> Conv 3x3 x256   │    │
+ │ Flatten -> Dense(512) -> Dense(512) -> z    │   │
+ └──────────────────┬───────────────────────┘     │
+                    │ z                             │
+     ┌──────────────┼───────────────┐              │
+     v              v               v              │
+  FOLLOW         LEFT/STRAIGHT     RIGHT            │
+  256->256       256->256 ...      256->256         │
+  Dense1(tanh)   Dense1(tanh)      Dense1(tanh)     │
+     └──────────────┴───────────────┘              │
+                    │ concat (N,4) * MAX_ANGLE      │
+                    v                               │
+                 [ * one-hot ] <────────────────────┘
                     │ reduce_sum
                     v
                 steering (N,1)  en  [-0.5, 0.5] rad
 ```
 
-La selección por máscara mantiene una única salida (MSE limpio) y un grafo
-exportable a TFLite. La velocidad no es entrada del modelo.
+Backbone fiel a Codevilla et al. (2018): 8 capas convolucionales en 4 bloques, con
+BatchNormalization + ReLU + Dropout y reduccion espacial por stride 2. La seleccion
+por máscara mantiene una única salida (MSE limpio) y un grafo exportable a TFLite. Se
+omiten la rama de velocidad y las salidas de gas/freno del modelo original: la
+velocidad no es entrada ni salida del modelo (la tarea indica que no se entrena).
 
 ---
 
@@ -106,7 +110,7 @@ exportable a TFLite. La velocidad no es entrada del modelo.
 
 | Parámetro | Valor | Significado |
 |---|---|---|
-| `IMG_H x IMG_W` | 66 x 200 | Entrada del modelo (estilo Bojarski) |
+| `IMG_H x IMG_W` | 88 x 200 | Entrada del modelo (estilo Codevilla) |
 | Recorte de ROI | 40%–90% de la altura | Quita cielo y cofre |
 | `MAX_ANGLE` | 0.5 rad | Límite del volante (entrenamiento e inferencia) |
 | `COLLECT_SPEED` | 30 km/h | Velocidad constante de recolección |
@@ -123,6 +127,6 @@ exportable a TFLite. La velocidad no es entrada del modelo.
 ## 6. Preprocesamiento idéntico entrenamiento/inferencia
 
 Para evitar el desfase dominio-entrenamiento, el recorte (40%–90% de altura),
-la conversión BGR->RGB, el resize a 66x200 y la normalización `/255` son
+la conversión BGR->RGB, el resize a 88x200 y la normalización `/255` son
 idénticos en `train_cil.preprocess` y en `CILDriver.preprocess`. Cualquier cambio
 debe replicarse en ambos lados.

@@ -64,9 +64,10 @@ augmentation en Colab supera las **10 mil imágenes**.
 
 ## 4. Modelo y entrenamiento
 
-- Entrada: imagen 66×200×3 (recorte 40%–90% de altura, RGB, normalizada) + comando one-hot.
-- Backbone: 3 bloques Conv (32, 64, 64) + MaxPool + Dropout; Flatten; Dense(256).
-- Cuatro ramas Dense(128)->Dense(1, tanh), escaladas a ±0.5 rad; selección por máscara.
+- Entrada: imagen 88×200×3 (recorte 40%–90% de altura, RGB, normalizada) + comando one-hot.
+- Backbone fiel a Codevilla: 8 capas Conv en 4 bloques (32/32, 64/64, 128/128, 256/256)
+  con BatchNorm + ReLU + Dropout y reducción por stride; Flatten; Dense(512)->Dense(512).
+- Cuatro ramas Dense(256)->Dense(256)->Dense(1, tanh), escaladas a ±0.5 rad; selección por máscara.
 - Pérdida MSE; Adam 1e-3; EarlyStopping + ReduceLROnPlateau.
 - Data augmentation: flip horizontal (niega el ángulo e intercambia LEFT<->RIGHT) y
   jitter de brillo.

@@ -78,7 +78,7 @@ from vehicle import Driver
 # ============================================================
 
 # --- Modelo / preprocesamiento (DEBE coincidir con train_cil.py) ---
-IMG_H, IMG_W = 66, 200
+IMG_H, IMG_W = 88, 200   # debe coincidir con train_cil.py (entrada estilo Codevilla)
 NUM_COMMANDS = 4
 CMD_FOLLOW, CMD_LEFT, CMD_STRAIGHT, CMD_RIGHT = 0, 1, 2, 3
 CMD_NAMES = {CMD_FOLLOW: "FOLLOW", CMD_LEFT: "LEFT",

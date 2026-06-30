@@ -62,7 +62,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 # CONSTANTES
 # =============================================================================
 
-IMG_H, IMG_W = 66, 200      # entrada estilo Bojarski (alto x ancho) tras recortar cielo/cofre
+IMG_H, IMG_W = 88, 200      # entrada estilo Codevilla (alto x ancho) tras recortar cielo/cofre
 NUM_COMMANDS = 4            # FOLLOW, LEFT, STRAIGHT, RIGHT
 MAX_ANGLE = 0.5            # rad — debe coincidir con el limite del controlador
 SEED = 42
@@ -192,29 +192,41 @@ def augment(X, C, y, brightness_copies=1, rng=None):
 # 3. MODELO CIL RAMIFICADO
 # =============================================================================
 
+def _conv_bn(x, filters, kernel, stride):
+    """Bloque conv estilo Codevilla: Conv -> BatchNorm -> ReLU -> Dropout."""
+    x = layers.Conv2D(filters, kernel, strides=stride, padding="same",
+                      kernel_initializer="glorot_uniform")(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Activation("relu")(x)
+    x = layers.Dropout(0.2)(x)
+    return x
+
+
 def construir_backbone(image_in):
     """
-    Backbone convolucional comun (bloques reutilizados de la CNN de la Act. 4.x,
-    train_gtsrb_cnn.py, extendidos a 3 bloques por la mayor resolucion de entrada).
-    Extrae el vector de caracteristicas `z` que alimenta a todas las ramas.
+    Backbone convolucional fiel a Codevilla et al. (2018): 8 capas convolucionales
+    en 4 bloques (32/32, 64/64, 128/128, 256/256), con BatchNormalization, ReLU y
+    Dropout. La reduccion espacial se hace con stride 2 al inicio de cada bloque (en
+    lugar de MaxPooling). Extrae el vector de caracteristicas `z` (FC 512 -> 512) que
+    alimenta a todas las ramas condicionales.
     """
-    x = layers.Conv2D(32, 3, activation="relu", padding="same")(image_in)
-    x = layers.Conv2D(32, 3, activation="relu")(x)
-    x = layers.MaxPooling2D(2)(x)
-    x = layers.Dropout(0.25)(x)
-
-    x = layers.Conv2D(64, 3, activation="relu", padding="same")(x)
-    x = layers.Conv2D(64, 3, activation="relu")(x)
-    x = layers.MaxPooling2D(2)(x)
-    x = layers.Dropout(0.25)(x)
-
-    x = layers.Conv2D(64, 3, activation="relu", padding="same")(x)
-    x = layers.Conv2D(64, 3, activation="relu")(x)
-    x = layers.MaxPooling2D(2)(x)
-    x = layers.Dropout(0.25)(x)
+    # Bloque 1: 5x5/s2 -> 3x3/s1, 32 filtros
+    x = _conv_bn(image_in, 32, 5, 2)
+    x = _conv_bn(x, 32, 3, 1)
+    # Bloque 2: 3x3/s2 -> 3x3/s1, 64 filtros
+    x = _conv_bn(x, 64, 3, 2)
+    x = _conv_bn(x, 64, 3, 1)
+    # Bloque 3: 3x3/s2 -> 3x3/s1, 128 filtros
+    x = _conv_bn(x, 128, 3, 2)
+    x = _conv_bn(x, 128, 3, 1)
+    # Bloque 4: 3x3/s1 -> 3x3/s1, 256 filtros
+    x = _conv_bn(x, 256, 3, 1)
+    x = _conv_bn(x, 256, 3, 1)
 
     x = layers.Flatten()(x)
-    z = layers.Dense(256, activation="relu")(x)
+    z = layers.Dense(512, activation="relu")(x)
+    z = layers.Dropout(0.5)(z)
+    z = layers.Dense(512, activation="relu")(z)
     z = layers.Dropout(0.5)(z)
     return z
 
@@ -236,8 +248,12 @@ def construir_cil():
 
     ramas = []
     for i in range(NUM_COMMANDS):
-        b = layers.Dense(128, activation="relu", name=f"branch_{CMD_NAMES[i].lower()}_fc")(z)
-        b = layers.Dense(1, activation="tanh", name=f"branch_{CMD_NAMES[i].lower()}_out")(b)
+        nombre = CMD_NAMES[i].lower()
+        # Cada rama replica el cabezal de Codevilla: dos FC de 256 antes de la salida.
+        b = layers.Dense(256, activation="relu", name=f"branch_{nombre}_fc1")(z)
+        b = layers.Dropout(0.5)(b)
+        b = layers.Dense(256, activation="relu", name=f"branch_{nombre}_fc2")(b)
+        b = layers.Dense(1, activation="tanh", name=f"branch_{nombre}_out")(b)
         ramas.append(b)
     # tanh -> [-1,1]; se escala al rango fisico del volante (+/-MAX_ANGLE).
     todas = layers.Concatenate(name="branches")(ramas)            # (N, 4)
