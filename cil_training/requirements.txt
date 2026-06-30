@@ -1,0 +1,5 @@
+# Entrenamiento del modelo CIL (Google Colab o local con GPU)
+tensorflow>=2.15
+numpy>=1.24
+opencv-python>=4.8
+matplotlib>=3.7

@@ -1,0 +1,3 @@
+# Controlador de recoleccion (Mundo #1) — dependencias de Python
+# El paquete `controller` y `vehicle` los provee Webots (no se instalan con pip).
+numpy>=1.24

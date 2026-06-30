@@ -1,0 +1,43 @@
+# Runtime config de Webots (contiene rutas locales de cada maquina)
+controllers/*/runtime.ini
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.ipynb_checkpoints/
+
+# Entorno virtual
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Proyecto de Webots (estado local de la ventana)
+worlds/.*.wbproj
+
+# Dataset crudo de conduccion manual (se sube al repo cil_dataset, no aqui).
+# Puede superar varios cientos de MB tras recolectar >10k imagenes.
+dataset/
+controllers/*/dataset/
+controllers/*/IMG/
+*.png.tmp
+
+# Pesos intermedios de entrenamiento (los modelos finales .keras/.tflite SI se versionan)
+cil_training/checkpoints/
+cil_training/logs/
