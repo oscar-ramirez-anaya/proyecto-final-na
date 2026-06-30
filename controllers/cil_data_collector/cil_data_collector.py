@@ -233,30 +233,39 @@ def main():
 
     while driver.step() != -1:
         now = time.time()
-        key = keyboard.getKey()
 
-        # --- Teclas continuas (se pueden mantener presionadas) ---
-        if key == Keyboard.LEFT:
+        # Webots devuelve UNA tecla por llamada a getKey(); hay que vaciar la cola
+        # para no perder pulsaciones simultaneas (p.ej. una flecha sostenida + un
+        # numero de comando). Por eso se leen TODAS las teclas del paso.
+        keys = []
+        k = keyboard.getKey()
+        while k != -1:
+            keys.append(k & 0xFFFF)   # descarta bits de modificadores (Shift/Ctrl/Alt)
+            k = keyboard.getKey()
+
+        # --- Teclas continuas (se pueden combinar: girar y acelerar a la vez) ---
+        if Keyboard.LEFT in keys:
             steering = max(-MAX_ANGLE, steering - ANGLE_INCR)
-        elif key == Keyboard.RIGHT:
+        if Keyboard.RIGHT in keys:
             steering = min(MAX_ANGLE, steering + ANGLE_INCR)
-        elif key == Keyboard.UP:
+        if Keyboard.UP in keys:
             speed = min(MAX_SPEED, speed + SPEED_INCR)
-        elif key == Keyboard.DOWN:
+        if Keyboard.DOWN in keys:
             speed = max(0.0, speed - SPEED_INCR)
 
         # --- Teclas de un solo disparo (con anti-rebote) ---
-        if key != -1 and (now - last_key_time) > DEBOUNCE_TIME:
-            if key == ord('R') or key == ord('r'):
-                steering = 0.0
-            elif key == ord('G') or key == ord('g'):
-                recording = not recording
-                print(f"[REC] {'ON' if recording else 'OFF'}")
-            elif key == ord('S') or key == ord('s'):
-                speed = 0.0
-            elif key in (ord('1'), ord('2'), ord('3'), ord('4')):
-                command = key - ord('1')   # '1'->0 ... '4'->3
-                print(f"[CMD] {CMD_NAMES[command]}")
+        if keys and (now - last_key_time) > DEBOUNCE_TIME:
+            for kk in keys:
+                if kk in (ord('R'), ord('r')):
+                    steering = 0.0
+                elif kk in (ord('G'), ord('g')):
+                    recording = not recording
+                    print(f"[REC] {'ON' if recording else 'OFF'}")
+                elif kk in (ord('S'), ord('s')):
+                    speed = 0.0
+                elif kk in (ord('1'), ord('2'), ord('3'), ord('4')):
+                    command = kk - ord('1')   # '1'->0 ... '4'->3
+                    print(f"[CMD] {CMD_NAMES[command]}")
             last_key_time = now
 
         # --- Aplicar comandos al vehiculo ---

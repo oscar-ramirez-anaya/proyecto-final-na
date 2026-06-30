@@ -369,11 +369,16 @@ def main():
         bgra = get_image(camera)
 
         # --- Comando de navegacion por teclado (latched, con anti-rebote) ---
-        key = keyboard.getKey()
-        if key in (ord('1'), ord('2'), ord('3'), ord('4')) and (step - last_cmd_step) > DEBOUNCE_STEPS:
-            command = key - ord('1')
-            last_cmd_step = step
-            print(f"[CMD] {CMD_NAMES[command]}")
+        # Se vacia la cola de teclas (getKey devuelve una por llamada) para no perder
+        # el comando si se pulsa junto con otra tecla.
+        k = keyboard.getKey()
+        while k != -1:
+            kk = k & 0xFFFF
+            if kk in (ord('1'), ord('2'), ord('3'), ord('4')) and (step - last_cmd_step) > DEBOUNCE_STEPS:
+                command = kk - ord('1')
+                last_cmd_step = step
+                print(f"[CMD] {CMD_NAMES[command]}")
+            k = keyboard.getKey()
 
         # --- Percepcion ---
         lidar_angle, lidar_dist = process_lidar(lidar) if lidar else (None, None)
