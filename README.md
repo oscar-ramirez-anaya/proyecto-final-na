@@ -381,7 +381,7 @@ estacionados. La unica modificacion del vehiculo es agregar el **nodo Radar** y 
 | `sensorsSlotFront` | SickLms291 | `Sick LMS 291` | Distancia frontal (peaton, evasion) |
 | `sensorsSlotTop` | Camera (+ Recognition) | `camera` | Imagen CIL + deteccion de peaton |
 | `sensorsSlotTop` | Display | `display_image` | Telemetria de a bordo |
-| `sensorsSlotCenter` | Radar | `radar` | Distancia de umbral (NUEVO) |
+| `sensorsSlotFront` | Radar | `radar` | Distancia de umbral, junto al LiDAR (NUEVO) |
 | `sensorsSlotCenter` | DistanceSensor x4 | `ds_right_*`, `ds_left` | Seguimiento de pared (evasion) |
 
 Notas de operacion: reducir el maximo de vehiculos SUMO en el Scene Tree **sin bajar

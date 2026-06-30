@@ -75,7 +75,7 @@ velocidad no es entrada ni salida del modelo (la tarea indica que no se entrena)
 | `sensorsSlotTop` | Camera | `camera` | Imagen para CIL y Recognition de peatón |
 | `sensorsSlotTop` | Display | `display_image` | Telemetría de a bordo |
 | `sensorsSlotCenter` | GPS, Gyro | — | Odometría / rumbo |
-| `sensorsSlotCenter` | Radar | `radar` | Distancia de umbral al vehículo de adelante (NUEVO) |
+| `sensorsSlotFront` | Radar | `radar` | Distancia de umbral al vehículo de adelante, junto al LiDAR (NUEVO) |
 | `sensorsSlotCenter` | DistanceSensor x4 | `ds_right_front/mid/rear`, `ds_left` | Seguimiento de pared (evasión) |
 
 ---

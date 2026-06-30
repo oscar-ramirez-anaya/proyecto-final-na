@@ -348,8 +348,8 @@ def main():
     ds_right_rear = get_device_opt(driver, "ds_right_rear", enable_ts=timestep)
 
     if radar is None:
-        print("[WARN] Sin nodo 'radar' en el mundo: agregue Radar al sensorsSlotCenter "
-              "del BmwX5 para habilitar el mantenimiento de distancia de umbral.")
+        print("[WARN] Sin nodo 'radar' en el mundo: agregue Radar al sensorsSlotFront "
+              "del BmwX5 (junto al LiDAR) para habilitar el mantenimiento de distancia de umbral.")
 
     # --- Estado del controlador ---
     command = CMD_FOLLOW

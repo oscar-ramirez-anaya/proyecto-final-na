@@ -23,25 +23,34 @@ Verificar que la `Camera` tenga `recognition Recognition {}` y que exista el
 `SickLms291` con `name` por defecto `"Sick LMS 291"` en `sensorsSlotFront`
 (ambos vienen en los mundos base de actividades previas).
 
-Dentro de `sensorsSlotCenter [ ... ]` del `BmwX5`, **agregar el nodo Radar**
-(componente nuevo del proyecto, para la distancia de umbral) y los **cuatro
-DistanceSensor laterales** reutilizados de la Actividad 4.2 (habilitan la evasion
-de obstaculos estaticos). El controlador los carga de forma defensiva: si alguno
-falta, esa capa de seguridad simplemente no se activa.
+Agregar el nodo **Radar** en `sensorsSlotFront [ ... ]` (junto al LiDAR, como pide
+la tarea) y los **cuatro DistanceSensor laterales** en `sensorsSlotCenter [ ... ]`,
+reutilizados de la Actividad 4.2 (habilitan la evasion de obstaculos estaticos). El
+controlador los carga de forma defensiva: si alguno falta, esa capa de seguridad
+simplemente no se activa.
+
+El **Radar** se monta en el **slot delantero** del vehiculo, junto al LiDAR, tal como
+sugiere el enunciado del proyecto.
 
 ```
-  sensorsSlotCenter [
-    GPS {
-    }
-    Gyro {
+  sensorsSlotFront [
+    SickLms291 {
+      translation 0.06 0 0
     }
     # --- COMPONENTE NUEVO: Radar para mantener distancia al vehiculo de adelante ---
-    # Los objetos del mundo ya definen 'radarCrossSection', por lo que el radar los
-    # detecta sin geometria adicional. El nombre "radar" coincide con cil_autonomous.py.
+    # Montado en el slot delantero junto al LiDAR (como pide la tarea). Los objetos
+    # del mundo ya definen 'radarCrossSection', por lo que el radar los detecta sin
+    # geometria adicional. El nombre "radar" coincide con cil_autonomous.py.
     Radar {
       name "radar"
       minRange 1
       maxRange 50
+    }
+  ]
+  sensorsSlotCenter [
+    GPS {
+    }
+    Gyro {
     }
     # --- Sensores laterales de un rayo (reutilizados de la Act. 4.2: evasion) ---
     DistanceSensor {
