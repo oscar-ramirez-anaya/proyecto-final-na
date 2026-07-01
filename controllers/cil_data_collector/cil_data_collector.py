@@ -27,11 +27,12 @@
     Flecha IZQUIERDA / DERECHA : ajustan el angulo de direccion (lo que se entrena).
     Flecha ARRIBA   / ABAJO    : ajustan la velocidad crucero (acotada a <=30 km/h).
     R                          : enderezan el volante (angulo = 0).
-    1 / 2 / 3 / 4              : fijan el comando de navegacion latente:
-                                   1 = FOLLOW   (seguir carril)
-                                   2 = LEFT     (girar a la izquierda en la interseccion)
-                                   3 = STRAIGHT (seguir derecho en la interseccion)
-                                   4 = RIGHT    (girar a la derecha en la interseccion)
+    Q / W / E / F              : fijan el comando de navegacion latente (mano izquierda;
+                                 Q/W/E mapean a izquierda/recto/derecha). Alias: 1-4.
+                                   F (o 1) = FOLLOW   (seguir carril)
+                                   Q (o 2) = LEFT     (girar a la izquierda en la interseccion)
+                                   W (o 3) = STRAIGHT (seguir derecho en la interseccion)
+                                   E (o 4) = RIGHT    (girar a la derecha en la interseccion)
     G                          : activa / desactiva la grabacion (toggle).
     S                          : detiene el vehiculo (velocidad 0).
 
@@ -85,6 +86,19 @@ CMD_STRAIGHT = 2      # seguir derecho en la interseccion
 CMD_RIGHT    = 3      # girar a la derecha en la siguiente interseccion
 CMD_NAMES = {CMD_FOLLOW: "FOLLOW", CMD_LEFT: "LEFT",
              CMD_STRAIGHT: "STRAIGHT", CMD_RIGHT: "RIGHT"}
+
+# Teclas para fijar el comando (latched). Q/W/E mapean espacialmente a
+# izquierda/recto/derecha y F = seguir; quedan a la mano izquierda mientras la
+# derecha maneja las flechas. Se aceptan tambien 1-4 como alias.
+CMD_KEYS = {
+    ord('Q'): CMD_LEFT, ord('W'): CMD_STRAIGHT, ord('E'): CMD_RIGHT, ord('F'): CMD_FOLLOW,
+    ord('1'): CMD_FOLLOW, ord('2'): CMD_LEFT, ord('3'): CMD_STRAIGHT, ord('4'): CMD_RIGHT,
+}
+
+# FOLLOW es el comando por defecto. Un comando de giro (LEFT/STRAIGHT/RIGHT) se
+# mantiene solo este tiempo (lo que toma cruzar una interseccion) y luego regresa
+# solo a FOLLOW. Asi basta UN toque por interseccion y nunca se pulsa FOLLOW.
+COMMAND_HOLD_SECONDS = 4.0
 
 # --- Captura del dataset ---
 CAPTURE_EVERY = 3     # guardar 1 imagen cada N pasos de simulacion (controla la tasa)
@@ -224,10 +238,12 @@ def main():
     saved = frame_idx
     step_counter = 0
     last_key_time = 0.0             # para el anti-rebote de teclas de un disparo
+    command_set_time = 0.0         # momento en que se fijo el comando de giro actual
 
     print("=" * 70)
     print(" RECOLECCION CIL — Mundo #1")
-    print("  Flechas: direccion/velocidad | R: enderezar | 1-4: comando")
+    print("  Flechas: direccion/velocidad | R: enderezar")
+    print("  Comando (mano izquierda):  Q=LEFT  W=STRAIGHT  E=RIGHT  F=FOLLOW")
     print("  G: grabar on/off | S: detener")
     print("=" * 70)
 
@@ -263,10 +279,18 @@ def main():
                     print(f"[REC] {'ON' if recording else 'OFF'}")
                 elif kk in (ord('S'), ord('s')):
                     speed = 0.0
-                elif kk in (ord('1'), ord('2'), ord('3'), ord('4')):
-                    command = kk - ord('1')   # '1'->0 ... '4'->3
+                elif kk in CMD_KEYS:
+                    command = CMD_KEYS[kk]
+                    command_set_time = now
                     print(f"[CMD] {CMD_NAMES[command]}")
             last_key_time = now
+
+        # --- Auto-retorno a FOLLOW ---
+        # Tras unos segundos (lo que toma cruzar la interseccion) el comando de giro
+        # vuelve solo a FOLLOW. Asi solo das UN toque por interseccion.
+        if command != CMD_FOLLOW and (now - command_set_time) > COMMAND_HOLD_SECONDS:
+            command = CMD_FOLLOW
+            print("[CMD] FOLLOW (auto)")
 
         # --- Aplicar comandos al vehiculo ---
         driver.setSteeringAngle(steering)

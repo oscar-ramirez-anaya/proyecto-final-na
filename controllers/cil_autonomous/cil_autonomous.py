@@ -84,6 +84,13 @@ CMD_FOLLOW, CMD_LEFT, CMD_STRAIGHT, CMD_RIGHT = 0, 1, 2, 3
 CMD_NAMES = {CMD_FOLLOW: "FOLLOW", CMD_LEFT: "LEFT",
              CMD_STRAIGHT: "STRAIGHT", CMD_RIGHT: "RIGHT"}
 
+# Teclas para dar el comando durante la conduccion autonoma (Q/W/E = izq/recto/der,
+# F = seguir; tambien 1-4 como alias).
+CMD_KEYS = {
+    ord('Q'): CMD_LEFT, ord('W'): CMD_STRAIGHT, ord('E'): CMD_RIGHT, ord('F'): CMD_FOLLOW,
+    ord('1'): CMD_FOLLOW, ord('2'): CMD_LEFT, ord('3'): CMD_STRAIGHT, ord('4'): CMD_RIGHT,
+}
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(SCRIPT_DIR, "model", "cil_model.tflite")
 SVM_MODEL_PATH = os.path.join(SCRIPT_DIR, "svm_pedestrian_model.joblib")
@@ -374,8 +381,8 @@ def main():
         k = keyboard.getKey()
         while k != -1:
             kk = k & 0xFFFF
-            if kk in (ord('1'), ord('2'), ord('3'), ord('4')) and (step - last_cmd_step) > DEBOUNCE_STEPS:
-                command = kk - ord('1')
+            if kk in CMD_KEYS and (step - last_cmd_step) > DEBOUNCE_STEPS:
+                command = CMD_KEYS[kk]
                 last_cmd_step = step
                 print(f"[CMD] {CMD_NAMES[command]}")
             k = keyboard.getKey()
