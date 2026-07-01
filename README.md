@@ -241,10 +241,32 @@ notebook valida que el dataset final supere las **10 mil imagenes**.
 | Batch / epocas | 64 / 40 (con early stopping) |
 | Exportacion | `.keras` + `.tflite` con verificacion de paridad |
 
-El entrenamiento se ejecuta en [`cil_training/cil_colab.ipynb`](cil_training/cil_colab.ipynb),
-que clona el dataset desde GitHub (`!git clone`), entrena, evalua el **MAE por
-comando** y descarga `cil_model.tflite`. La logica vive en
-[`cil_training/train_cil.py`](cil_training/train_cil.py), reutilizada por el notebook.
+### Notebook de entrenamiento (Google Colab)
+
+**Notebook: [`cil_training/cil_colab.ipynb`](cil_training/cil_colab.ipynb)**
+&nbsp;·&nbsp; [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/oscar-ramirez-anaya/proyecto-final-na/blob/main/cil_training/cil_colab.ipynb)
+
+Es la pieza central del entrenamiento. Clona el dataset desde GitHub con `!git clone`,
+carga las imagenes y entrena el modelo CIL, con **visualizaciones en cada etapa**. Sus
+secciones son:
+
+1. Entorno y GPU
+2. Clonar el dataset y el codigo
+3. Cargar el dataset
+4. Analisis exploratorio (balance por comando, distribucion de angulos, muestras)
+5. Preprocesamiento (antes / despues)
+6. Rebalanceo + data augmentation (flip + brillo)
+7. Arquitectura del modelo (resumen + diagrama)
+8. Entrenamiento
+9. Curvas de perdida / MAE
+10. Evaluacion (MAE por comando, dispersion, error, predicciones visualizadas)
+11. Exportacion a `.keras` + `.tflite` con verificacion de paridad
+12. Integracion en Webots
+
+La logica del modelo y del pipeline vive en
+[`cil_training/train_cil.py`](cil_training/train_cil.py), que el notebook importa y
+reutiliza (asi el preprocesamiento coincide con la inferencia en Webots). Alternativa
+sin Colab: `python cil_training/train_cil.py --data_dir <dataset> --balance`.
 
 ---
 
@@ -464,12 +486,13 @@ freno y **declara el valor de la distancia de umbral del radar (12 m)**.
 
 ## 14. Declaracion de uso de inteligencia artificial
 
-Para el desarrollo de este proyecto se utilizo **Claude Code**, bajo una metodologia
-de **spec-driven development y pruebas automatizadas**: la especificacion de la tarea
-se tradujo a un plan detallado y verificable, a partir del cual se genero y depuro el
-codigo de los controladores, el modelo y el notebook, validandolo con las pruebas
-automatizadas (`tests/test_cil_inference.py`). Todo el codigo fue revisado por el
-equipo; la responsabilidad final del contenido recae en los autores.
+Para el desarrollo de este proyecto se utilizaron **herramientas de asistencia de IA**,
+bajo una metodologia de **spec-driven development y pruebas automatizadas**: la
+especificacion de la tarea se tradujo a un plan detallado y verificable, a partir del
+cual se genero y depuro el codigo de los controladores, el modelo y el notebook,
+validandolo con las pruebas automatizadas (`tests/test_cil_inference.py`). Todo el
+codigo fue revisado por el equipo; la responsabilidad final del contenido recae en los
+autores.
 
 ---
 

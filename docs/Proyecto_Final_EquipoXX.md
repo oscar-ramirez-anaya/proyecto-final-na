@@ -129,13 +129,16 @@ de umbral del radar (12.0 m)**.
 
 ## 9. Declaración de uso de inteligencia artificial
 
-Para la elaboración de este proyecto se utilizó **Claude Code**, bajo una metodología
-de **spec-driven development y pruebas automatizadas**: la especificación de la tarea
-se tradujo a un plan detallado y verificable, a partir del cual se generó y depuró el
-código de los controladores, el modelo y el notebook, validándolo con pruebas
-automatizadas (`tests/test_cil_inference.py`). La responsabilidad final sobre el
-contenido recae en el equipo, que revisó y ajustó las soluciones para que se ajusten
-estrictamente a lo solicitado.
+Para la elaboración de este proyecto se utilizaron **herramientas de asistencia de IA**,
+bajo una metodología de **spec-driven development y pruebas automatizadas**: la
+especificación de la tarea se tradujo a un plan detallado y verificable, a partir del
+cual se generó y depuró el código de los controladores, el modelo y el notebook,
+validándolo con pruebas automatizadas (`tests/test_cil_inference.py`). La
+responsabilidad final sobre el contenido recae en el equipo, que revisó y ajustó las
+soluciones para que se ajusten estrictamente a lo solicitado.
+
+> Nota: indicar aquí la(s) herramienta(s) y modelo(s) de IA específicos empleados,
+> conforme lo solicita el enunciado (herramienta, modelo y finalidad de uso).
 
 ## 10. Referencias
 
