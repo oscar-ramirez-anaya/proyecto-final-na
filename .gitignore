@@ -38,6 +38,9 @@ controllers/*/dataset/
 controllers/*/IMG/
 *.png.tmp
 
-# Pesos intermedios de entrenamiento (los modelos finales .keras/.tflite SI se versionan)
+# Pesos intermedios de entrenamiento
 cil_training/checkpoints/
 cil_training/logs/
+
+# El .keras es pesado (~29 MB); se versiona solo el .tflite (lo que carga Webots)
+*.keras

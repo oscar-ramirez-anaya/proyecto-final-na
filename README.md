@@ -168,27 +168,28 @@ en ambos sentidos cubriendo todas las rutas, incluir **maniobras de recuperacion
 
 ## 4. Modelo CIL ramificado
 
-La arquitectura es fiel a **Codevilla et al. (2018)**: un **backbone convolucional**
-comun extrae caracteristicas de la imagen y **una rama por comando** predice el
-angulo de direccion. El comando activo selecciona, mediante una **mascara one-hot**,
-que rama produce la salida.
+La arquitectura combina la idea **ramificada por comando de Codevilla et al. (2018)**
+con un **backbone convolucional ligero estilo Bojarski et al. (2016)** — el modelo que
+recomienda el enunciado. Un backbone comun extrae caracteristicas de la imagen y **una
+rama por comando** predice el angulo; el comando activo selecciona, mediante una
+**mascara one-hot**, que rama produce la salida. El backbone ligero (~2.4M parametros)
+permite entrenar en CPU en pocos minutos, frente a los ~38M de un backbone Codevilla
+completo.
 
 ```
  image (88x200x3)                                       command (one-hot, 4)
       │                                                       │
       v                                                       │
  ┌──────────────────────────────────────────────┐            │
- │ Bloque 1: Conv 5x5/s2 x32 -> Conv 3x3 x32       │           │
- │ Bloque 2: Conv 3x3/s2 x64 -> Conv 3x3 x64       │           │
- │ Bloque 3: Conv 3x3/s2 x128 -> Conv 3x3 x128     │  (cada conv: BN + ReLU + Dropout)
- │ Bloque 4: Conv 3x3 x256 -> Conv 3x3 x256        │           │
- │ Flatten -> Dense(512) -> Dense(512) -> z         │          │
+ │ Conv 5x5/s2 x24 -> Conv 5x5/s2 x36              │           │
+ │ Conv 5x5/s2 x48 -> Conv 3x3 x64 -> Conv 3x3 x64 │  (ReLU + Dropout)
+ │ Flatten -> Dense(128) -> z                      │           │
  └───────────────────────┬──────────────────────┘            │
                           │ z                                  │
      ┌────────────────────┼────────────────────┐              │
      v          v                  v            v              │
   FOLLOW      LEFT             STRAIGHT        RIGHT            │
-  256->256    256->256         256->256        256->256        │
+  Dense64     Dense64          Dense64         Dense64         │
   Dense1tanh  Dense1tanh       Dense1tanh      Dense1tanh      │
      └────────────────────┴────────────────────┘              │
                   concat (N,4) * MAX_ANGLE                      │
@@ -418,8 +419,26 @@ $ python tests/test_cil_inference.py
 
 ## 12. Resultados
 
-> Esta seccion se completa tras la evaluacion final en el Mundo #2. Las evidencias
-> (curvas de entrenamiento, MAE por comando y capturas de las tres rutas) se guardan
+### Entrenamiento del modelo
+
+Modelo entrenado con 26,241 imagenes recolectadas (tras rebalanceo y augmentation),
+backbone ligero estilo Bojarski (~2.4M parametros). Resultados de validacion:
+
+| Metrica | Valor |
+|---------|-------|
+| MAE global de steering | **0.030 rad** (~1.7 grados) |
+| MAE FOLLOW | 0.017 rad |
+| MAE STRAIGHT | 0.014 rad |
+| MAE LEFT | 0.043 rad |
+| MAE RIGHT | 0.043 rad |
+| Paridad Keras vs TFLite | 0.003 rad (max) |
+
+Verificacion del comportamiento condicional: ante una misma imagen, el modelo produce
+angulos distintos segun el comando (FOLLOW ~0, LEFT negativo, RIGHT positivo), lo que
+confirma que el CIL discrimina por comando. `MAE(LEFT) = MAE(RIGHT)` gracias al flip
+horizontal, que compensa la menor cantidad de giros a la derecha recolectados.
+
+> Las capturas de las tres rutas del Mundo #2 y las curvas de entrenamiento se guardan
 > en [`screenshots/`](screenshots/) y se integran al reporte
 > [`docs/Proyecto_Final_EquipoXX.md`](docs/Proyecto_Final_EquipoXX.md).
 

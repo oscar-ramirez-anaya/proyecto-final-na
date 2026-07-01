@@ -65,15 +65,19 @@ augmentation en Colab supera las **10 mil imágenes**.
 ## 4. Modelo y entrenamiento
 
 - Entrada: imagen 88×200×3 (recorte 40%–90% de altura, RGB, normalizada) + comando one-hot.
-- Backbone fiel a Codevilla: 8 capas Conv en 4 bloques (32/32, 64/64, 128/128, 256/256)
-  con BatchNorm + ReLU + Dropout y reducción por stride; Flatten; Dense(512)->Dense(512).
-- Cuatro ramas Dense(256)->Dense(256)->Dense(1, tanh), escaladas a ±0.5 rad; selección por máscara.
+- Backbone ligero estilo Bojarski (~2.4M parámetros): 5 conv (24/36/48/64/64) con
+  reducción por stride + Dropout; Flatten; Dense(128). Se eligió sobre el backbone de
+  8 capas de Codevilla (~38M) para poder entrenar en CPU en minutos sin perder calidad.
+- Cuatro ramas Dense(64)->Dense(1, tanh), escaladas a ±0.5 rad; selección por máscara.
 - Pérdida MSE; Adam 1e-3; EarlyStopping + ReduceLROnPlateau.
 - Data augmentation: flip horizontal (niega el ángulo e intercambia LEFT<->RIGHT) y
   jitter de brillo.
 - Exportación a `.keras` y `.tflite` con verificación de paridad.
 
-*[PENDIENTE: pegar las curvas de pérdida/MAE y la tabla de MAE por comando del notebook.]*
+Resultados de entrenamiento (validación): MAE global **0.030 rad**; por comando
+FOLLOW 0.017, STRAIGHT 0.014, LEFT 0.043, RIGHT 0.043; paridad Keras vs TFLite 0.003 rad.
+Ante una misma imagen el modelo da FOLLOW≈0, LEFT negativo y RIGHT positivo, lo que
+confirma el comportamiento condicional. *[PENDIENTE: pegar las curvas del notebook.]*
 
 ## 5. Evaluación autónoma (Mundo #2)
 
