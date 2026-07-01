@@ -372,7 +372,9 @@ def main():
 
     print("=" * 70)
     print(" CONTROLADOR AUTONOMO CIL — Mundo #2")
-    print("  Comandos por teclado: 1=FOLLOW 2=LEFT 3=STRAIGHT 4=RIGHT")
+    print("  HAZ CLIC EN LA VENTANA 3D para que capture el teclado.")
+    print("  Comando:  Q=LEFT   flecha ARRIBA=STRAIGHT   E=RIGHT   F=FOLLOW")
+    print("            (alias numericos: 1=FOLLOW 2=LEFT 3=STRAIGHT 4=RIGHT)")
     print(f"  Distancia de umbral del radar: {RADAR_DIST_UMBRAL:.1f} m")
     print("=" * 70)
 
