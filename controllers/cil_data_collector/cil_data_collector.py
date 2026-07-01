@@ -25,16 +25,16 @@
   Controles de teclado
   --------------------
     Flecha IZQUIERDA / DERECHA : ajustan el angulo de direccion (lo que se entrena).
-    Flecha ARRIBA   / ABAJO    : ajustan la velocidad crucero (acotada a <=30 km/h).
+    Flecha ABAJO               : frena mientras se mantiene; al soltar recupera el
+                                 crucero constante (<=30 km/h).
     R                          : enderezan el volante (angulo = 0).
-    Q / W / E / F              : fijan el comando de navegacion latente (mano izquierda;
-                                 Q/W/E mapean a izquierda/recto/derecha). Alias: 1-4.
-                                   F (o 1) = FOLLOW   (seguir carril)
-                                   Q (o 2) = LEFT     (girar a la izquierda en la interseccion)
-                                   W (o 3) = STRAIGHT (seguir derecho en la interseccion)
-                                   E (o 4) = RIGHT    (girar a la derecha en la interseccion)
+    Comando de navegacion latente (basta UN toque por interseccion; FOLLOW es el
+    valor por defecto y regresa solo tras unos segundos):
+                                   Q            = LEFT     (girar a la izquierda)
+                                   Flecha ARRIBA (o W) = STRAIGHT (seguir derecho)
+                                   E            = RIGHT    (girar a la derecha)
+                                 Alias numericos: 1=FOLLOW 2=LEFT 3=STRAIGHT 4=RIGHT.
     G                          : activa / desactiva la grabacion (toggle).
-    S                          : detiene el vehiculo (velocidad 0).
 
   Salida (dataset)
   ----------------
@@ -91,7 +91,8 @@ CMD_NAMES = {CMD_FOLLOW: "FOLLOW", CMD_LEFT: "LEFT",
 # izquierda/recto/derecha y F = seguir; quedan a la mano izquierda mientras la
 # derecha maneja las flechas. Se aceptan tambien 1-4 como alias.
 CMD_KEYS = {
-    ord('Q'): CMD_LEFT, ord('W'): CMD_STRAIGHT, ord('E'): CMD_RIGHT, ord('F'): CMD_FOLLOW,
+    ord('Q'): CMD_LEFT, Keyboard.UP: CMD_STRAIGHT, ord('W'): CMD_STRAIGHT,
+    ord('E'): CMD_RIGHT, ord('F'): CMD_FOLLOW,
     ord('1'): CMD_FOLLOW, ord('2'): CMD_LEFT, ord('3'): CMD_STRAIGHT, ord('4'): CMD_RIGHT,
 }
 
@@ -242,9 +243,9 @@ def main():
 
     print("=" * 70)
     print(" RECOLECCION CIL — Mundo #1")
-    print("  Flechas: direccion/velocidad | R: enderezar")
-    print("  Comando (mano izquierda):  Q=LEFT  W=STRAIGHT  E=RIGHT  F=FOLLOW")
-    print("  G: grabar on/off | S: detener")
+    print("  Direccion:  <-  ->    |   Frenar: flecha ABAJO   |   R: enderezar")
+    print("  Comando (un toque):  Q=LEFT   flecha ARRIBA=STRAIGHT   E=RIGHT")
+    print("  FOLLOW es automatico.  G: grabar on/off")
     print("=" * 70)
 
     while driver.step() != -1:
@@ -264,10 +265,13 @@ def main():
             steering = max(-MAX_ANGLE, steering - ANGLE_INCR)
         if Keyboard.RIGHT in keys:
             steering = min(MAX_ANGLE, steering + ANGLE_INCR)
-        if Keyboard.UP in keys:
-            speed = min(MAX_SPEED, speed + SPEED_INCR)
+        # Velocidad: crucero constante. La flecha ARRIBA se reserva para el comando
+        # STRAIGHT, asi que la velocidad se autoregula: manten ABAJO para frenar y al
+        # soltar recupera el crucero.
         if Keyboard.DOWN in keys:
             speed = max(0.0, speed - SPEED_INCR)
+        elif speed < COLLECT_SPEED:
+            speed = min(COLLECT_SPEED, speed + SPEED_INCR)
 
         # --- Teclas de un solo disparo (con anti-rebote) ---
         if keys and (now - last_key_time) > DEBOUNCE_TIME:
@@ -277,8 +281,6 @@ def main():
                 elif kk in (ord('G'), ord('g')):
                     recording = not recording
                     print(f"[REC] {'ON' if recording else 'OFF'}")
-                elif kk in (ord('S'), ord('s')):
-                    speed = 0.0
                 elif kk in CMD_KEYS:
                     command = CMD_KEYS[kk]
                     command_set_time = now

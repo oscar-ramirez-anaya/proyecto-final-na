@@ -87,7 +87,8 @@ CMD_NAMES = {CMD_FOLLOW: "FOLLOW", CMD_LEFT: "LEFT",
 # Teclas para dar el comando durante la conduccion autonoma (Q/W/E = izq/recto/der,
 # F = seguir; tambien 1-4 como alias).
 CMD_KEYS = {
-    ord('Q'): CMD_LEFT, ord('W'): CMD_STRAIGHT, ord('E'): CMD_RIGHT, ord('F'): CMD_FOLLOW,
+    ord('Q'): CMD_LEFT, Keyboard.UP: CMD_STRAIGHT, ord('W'): CMD_STRAIGHT,
+    ord('E'): CMD_RIGHT, ord('F'): CMD_FOLLOW,
     ord('1'): CMD_FOLLOW, ord('2'): CMD_LEFT, ord('3'): CMD_STRAIGHT, ord('4'): CMD_RIGHT,
 }
 
