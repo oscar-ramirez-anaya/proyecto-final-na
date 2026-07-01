@@ -87,10 +87,17 @@ CMD_NAMES = {CMD_FOLLOW: "FOLLOW", CMD_LEFT: "LEFT",
 # Teclas para dar el comando durante la conduccion autonoma (Q/W/E = izq/recto/der,
 # F = seguir; tambien 1-4 como alias).
 CMD_KEYS = {
-    ord('Q'): CMD_LEFT, Keyboard.UP: CMD_STRAIGHT, ord('W'): CMD_STRAIGHT,
-    ord('E'): CMD_RIGHT, ord('F'): CMD_FOLLOW,
+    ord('Q'): CMD_LEFT, ord('q'): CMD_LEFT,
+    Keyboard.UP: CMD_STRAIGHT, ord('W'): CMD_STRAIGHT, ord('w'): CMD_STRAIGHT,
+    ord('E'): CMD_RIGHT, ord('e'): CMD_RIGHT,
+    ord('F'): CMD_FOLLOW, ord('f'): CMD_FOLLOW,
     ord('1'): CMD_FOLLOW, ord('2'): CMD_LEFT, ord('3'): CMD_STRAIGHT, ord('4'): CMD_RIGHT,
 }
+
+# Al comandar un giro, se garantiza un angulo minimo decidido (el modelo puede dar
+# giros muy suaves). Se usa el mayor entre el modelo y este minimo.
+TURN_MIN_ANGLE = 0.35   # rad — giro minimo asegurado en LEFT/RIGHT
+TURN_SPEED = 15.0       # km/h — mas lento durante un giro
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(SCRIPT_DIR, "model", "cil_model.tflite")
@@ -388,10 +395,14 @@ def main():
         k = keyboard.getKey()
         while k != -1:
             kk = k & 0xFFFF
-            if kk in CMD_KEYS and (step - last_cmd_step) > DEBOUNCE_STEPS:
-                command = CMD_KEYS[kk]
+            if (step - last_cmd_step) > DEBOUNCE_STEPS:
+                if kk in CMD_KEYS:
+                    command = CMD_KEYS[kk]
+                    print(f"[CMD] {CMD_NAMES[command]}")
+                else:
+                    # Diagnostico: la tecla llego pero no es de comando.
+                    print(f"[KEY] tecla codigo {kk} (no mapeada)")
                 last_cmd_step = step
-                print(f"[CMD] {CMD_NAMES[command]}")
             k = keyboard.getKey()
 
         # --- Percepcion ---
@@ -405,6 +416,15 @@ def main():
             steering = 0.0
         speed = CRUISE_SPEED
         motivo = f"CIL:{CMD_NAMES[command]}"
+
+        # Giro DECIDIDO: al comandar LEFT/RIGHT se garantiza un angulo minimo hacia
+        # ese lado (el mayor entre el modelo y TURN_MIN_ANGLE) y se reduce la velocidad.
+        if command == CMD_LEFT:
+            steering = min(steering, -TURN_MIN_ANGLE)
+            speed = TURN_SPEED
+        elif command == CMD_RIGHT:
+            steering = max(steering, TURN_MIN_ANGLE)
+            speed = TURN_SPEED
 
         # ===== ARBITRAJE DE SEGURIDAD (prioridad descendente) =====
 
