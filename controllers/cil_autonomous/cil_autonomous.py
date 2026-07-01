@@ -265,10 +265,14 @@ def read_radar_nearest(radar):
         return None
     mejor = None
     for t in targets:
-        # getAzimuth() / getDistance() son metodos de RadarTarget en Webots.
-        if abs(t.getAzimuth()) <= RADAR_AZIMUTH_MAX:
-            if mejor is None or t.getDistance() < mejor:
-                mejor = t.getDistance()
+        # En Webots, RadarTarget expone sus datos como ATRIBUTOS (no metodos):
+        # t.distance (m), t.azimuth (rad), t.speed (m/s), t.receivedPower.
+        az = getattr(t, "azimuth", 0.0)
+        dist = getattr(t, "distance", None)
+        if dist is None:
+            continue
+        if abs(az) <= RADAR_AZIMUTH_MAX and (mejor is None or dist < mejor):
+            mejor = dist
     return mejor
 
 
