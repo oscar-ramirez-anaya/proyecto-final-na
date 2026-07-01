@@ -140,6 +140,43 @@ def _resumen_balance(C, etiqueta):
 # 2. DATA AUGMENTATION ESPECIFICO DE BEHAVIORAL CLONING
 # =============================================================================
 
+def balance_dataset(X, C, y, follow_ratio=3.0, rng=None):
+    """
+    Acerca el balance entre comandos ANTES del augmentation:
+      - submuestrea FOLLOW (que suele dominar) a `follow_ratio` veces la clase de
+        giro mas numerosa,
+      - sobremuestrea (con repeticion) LEFT / STRAIGHT / RIGHT hasta esa misma clase.
+    Evita que el modelo se sesgue a ir siempre recto cuando el dataset tiene pocos
+    giros. Retorna los arreglos balanceados.
+    """
+    if rng is None:
+        rng = np.random.default_rng(SEED)
+    counts = {k: int(np.sum(C == k)) for k in range(NUM_COMMANDS)}
+    turnos = [counts[k] for k in (CMD_LEFT, CMD_STRAIGHT, CMD_RIGHT) if counts[k] > 0]
+    if not turnos:
+        print("[BALANCE] No hay giros; se omite el rebalanceo.")
+        return X, C, y
+    objetivo = max(turnos)
+    follow_target = int(objetivo * follow_ratio)
+
+    seleccion = []
+    for k in range(NUM_COMMANDS):
+        ids = np.where(C == k)[0]
+        if len(ids) == 0:
+            continue
+        if k == CMD_FOLLOW:
+            sel = rng.choice(ids, min(len(ids), follow_target), replace=False)
+        else:
+            sel = rng.choice(ids, objetivo, replace=len(ids) < objetivo)
+        seleccion.append(sel)
+    idx = np.concatenate(seleccion)
+    rng.shuffle(idx)
+    print(f"[BALANCE] {len(X)} -> {len(idx)} muestras (FOLLOW<= {follow_target}, "
+          f"cada giro -> {objetivo})")
+    _resumen_balance(C[idx], "balanceado")
+    return X[idx], C[idx], y[idx]
+
+
 def augment(X, C, y, brightness_copies=1, rng=None):
     """
     Expande el dataset con variantes que preservan la semantica de la conduccion:
@@ -372,6 +409,10 @@ def main():
     ap.add_argument("--batch_size", type=int, default=64)
     ap.add_argument("--brightness_copies", type=int, default=1,
                     help="Copias con jitter de brillo por muestra (controla el tamano final)")
+    ap.add_argument("--balance", action="store_true",
+                    help="Rebalancear comandos (submuestrea FOLLOW, sobremuestrea giros)")
+    ap.add_argument("--follow_ratio", type=float, default=3.0,
+                    help="Cuantas veces FOLLOW respecto a la clase de giro mas numerosa")
     args = ap.parse_args()
 
     print("=" * 70)
@@ -380,6 +421,8 @@ def main():
     print(f"TensorFlow {tf.__version__} | GPU: {tf.config.list_physical_devices('GPU')}")
 
     X, C, y = load_dataset(args.data_dir)
+    if args.balance:
+        X, C, y = balance_dataset(X, C, y, follow_ratio=args.follow_ratio)
     X, C, y = augment(X, C, y, brightness_copies=args.brightness_copies)
 
     model = construir_cil()

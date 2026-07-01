@@ -117,20 +117,25 @@ volante se acota a **±0.5 rad** y la velocidad se expresa en km/h.
 ## 3. Recoleccion del dataset (Mundo #1)
 
 El controlador [`controllers/cil_data_collector/cil_data_collector.py`](controllers/cil_data_collector/cil_data_collector.py)
-parte del controlador de la **Actividad 2.1 sin PID**: la direccion la fija por
-completo el conductor humano. El controlador mantiene **dos planos de control
-independientes** mas un **comando de navegacion latente**.
+es de **recoleccion asistida**: el vehiculo **se conduce solo siguiendo el carril**
+con el pipeline de vision + PID reutilizado de la Act. 2.1 / 4.2, y el operador solo
+**da el comando de navegacion** (un toque por interseccion). El controlador ejecuta el
+giro y **etiqueta cada imagen automaticamente**. Asi el manejo recto (FOLLOW) es
+automatico y suave, y el dataset sale mucho mas balanceado que conduciendo a mano.
 
 ### Controles de teclado
 
-| Tecla | Accion | Plano |
-|-------|--------|-------|
-| ← / → | Ajustan el angulo de direccion (±0.05 rad, limite ±0.5) | Direccion (se entrena) |
-| ↑ / ↓ | Ajustan la velocidad crucero (tope 30 km/h) | Velocidad (no se entrena) |
-| R | Endereza el volante (angulo = 0) | Direccion |
-| 1 / 2 / 3 / 4 | Fijan el comando: FOLLOW / LEFT / STRAIGHT / RIGHT | Comando (latched) |
-| G | Activa / desactiva la grabacion | Grabacion |
-| S | Detiene el vehiculo | Velocidad |
+| Tecla | Accion |
+|-------|--------|
+| Q | Comando LEFT (un toque; el auto gira a la izquierda en la interseccion) |
+| ↑ | Comando STRAIGHT (cruzar derecho) |
+| E | Comando RIGHT (girar a la derecha) |
+| ← / → | Correccion manual de la direccion (se suma al PID) |
+| ↓ | Frena mientras se mantiene |
+| G | Activa / desactiva la grabacion |
+
+**FOLLOW es automatico:** no se presiona; el comando de giro regresa solo a FOLLOW
+tras cruzar la interseccion (~4 s). La direccion se ralentiza durante los giros.
 
 ### Captura automatica y CSV
 
